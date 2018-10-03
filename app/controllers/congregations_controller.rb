@@ -2,9 +2,9 @@ class CongregationsController < ApplicationController
   def index
     #Allow all users to see this page
     @congregations = Congregation.all
-    if current_publisher
-      set_congregation_by_publisher
-    else
+    if @publisher = current_publisher 
+      get_congregation_by_publisher 
+    else 
       redirect_to new_publisher_path
     end
 
@@ -15,9 +15,8 @@ class CongregationsController < ApplicationController
   end
 
   def new
-    if current_user.id == 1
-      current_user.update_attribute :admin, true
-    end
+    current_user.update_attribute :admin, true if current_user.id == 1
+
     if current_user.admin?
       @congregation = Congregation.new
     else
@@ -32,7 +31,7 @@ class CongregationsController < ApplicationController
   end
 
   def edit
-    @congregation = Congregation.find_by_id(params[:id])
+    @congregation = get_congregation_by_id  
   end
 
   def update
@@ -41,15 +40,15 @@ class CongregationsController < ApplicationController
 
   def show
     if !current_user.admin?
-      if current_publisher
-        set_congregation_by_publisher
-      elsif !current_publisher
-        redirect_to new_publisher_path
-      else !set_congregation_by_publisher
+      if @publisher = current_publisher
+        @congregation = get_congregation_by_publisher
+      elsif !get_congregation_by_publisher
         redirect_to congregations_path
+      else
+        redirect_to new_publisher_path 
       end
     else
-      set_congregation_by_id
+      @congregation =. get_congregation_by_id
     end
 
     respond_to do |f|
@@ -65,16 +64,14 @@ class CongregationsController < ApplicationController
   end
 
   def current_publisher
-    if current_user.publisher_id
-    @publisher = Publisher.find_by_id(current_user.publisher_id)
-    end
+    Publisher.find_by_id(current_user.publisher_id) if current_user.publisher_id
   end
 
-  def set_congregation_by_publisher
-    @congregation = Congregation.find_by_id(@publisher.congregation_id)
+  def get_congregation_by_publisher
+    Congregation.find_by_id(@publisher.congregation_id)
   end
 
-  def set_congregation_by_id
-    @congregation = Congregation.find_by_id(params[:id])
+  def get_congregation_by_id
+    Congregation.find_by_id(params[:id])
   end
 end
